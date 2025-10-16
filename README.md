@@ -88,6 +88,27 @@ Customization
 To change the report location, update ReportManager.InitReport() in Helpers/ReportManager.cs.
 To add environment info, use extent.AddSystemInfo("Key", "Value").
 
+
+Observations and Findings :-
+PATCH Request Behavior and Workaround
+Issue: Reserved ID Restriction
+When executing a PATCH request on certain predefined or existing object IDs, the API responds with:
+
+Code
+405 Method not allowed: Cannot update reserved IDs
+This indicates that the API restricts updates to system-reserved or protected IDs, preventing modification through PATCH operations.
+
+Workaround Strategy
+To validate PATCH functionality without triggering this restriction:
+Create a new object using a POST request
+This ensures the object has a valid, non-reserved ID.
+The object is created with editable data.
+Execute the PATCH request on the newly created object
+This allows verification of PATCH behavior under normal conditions.
+Clean up using DELETE in the teardown
+The object is deleted after the test completes.
+This maintains a clean test environment and avoids data clutter.
+
 Author
 Created by: 
 Name: Preeti Gupta 
