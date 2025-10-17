@@ -39,16 +39,7 @@ jobs:
     - name: Run tests               # Execute tests and collect code coverage
       run: dotnet test --configuration Release --no-build --logger "trx;LogFileName=test_results.trx" --collect:"XPlat Code Coverage"
 
-    - name: Publish test results summary  # Show test results in GitHub UI
-      if: always()
-      continue-on-error: true        # Prevent workflow failure if test reporter fails
-      uses: dorny/test-reporter@v1
-      with:
-        name: .NET Test Results
-        path: '**/*.trx'
-        reporter: dotnet-trx
-        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
+    
     - name: Upload test results       # Save raw test result files as artifacts
       if: always()
       uses: actions/upload-artifact@v4
