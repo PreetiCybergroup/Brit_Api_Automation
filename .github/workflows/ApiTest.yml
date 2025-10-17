@@ -47,7 +47,7 @@ jobs:
         name: .NET Test Results
         path: '**/*.trx'
         reporter: dotnet-trx
-        token: ${{ secrets.GITHUB_TOKEN }}  # Explicitly pass the token
+        
 
     - name: Upload test results       # Save raw test result files as artifacts
       if: always()
