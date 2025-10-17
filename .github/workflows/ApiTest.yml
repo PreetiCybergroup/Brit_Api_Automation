@@ -2,34 +2,71 @@
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: 
+      - main                  # Trigger on pushes to main
+      - develop               # Trigger on pushes to develop
+      - feature/**            # Trigger on any feature branch
+  pull_request: {}            # Trigger on all pull requests
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  api-tests:                   # Job name
+    name: API Automation Tests
+    runs-on: ubuntu-latest     # Use latest Ubuntu runner
 
     steps:
-    - name: Checkout code
+    - name: Checkout code      # Pull source code from repo
       uses: actions/checkout@v3
 
-    - name: Setup .NET
+    - name: Setup .NET SDK         # Install .NET SDK (required for build/test)
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '8.0.x'
 
-    - name: Restore dependencies
+    - name: Cache NuGet packages   # Speed up builds by caching dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies    # Restore NuGet packages
       run: dotnet restore
 
-    - name: Build project
-      run: dotnet build --no-restore
+    - name: Build project           # Compile the project in Release mode
+      run: dotnet build --configuration Release --no-restore
 
-    - name: Run tests
-      run: dotnet test --no-build --logger "trx;LogFileName=test_results.trx"
+    - name: Run tests               # Execute tests and collect code coverage
+      run: dotnet test --configuration Release --no-build --logger "trx;LogFileName=test_results.trx" --collect:"XPlat Code Coverage"
 
-    - name: Upload test results
+    - name: Publish test results summary  # Show test results in GitHub UI
+      if: always()
+      continue-on-error: true        # Prevent workflow failure if test reporter fails
+      uses: dorny/test-reporter@v1
+      with:
+        name: .NET Test Results
+        path: '**/*.trx'
+        reporter: dotnet-trx
+
+    - name: Upload test results       # Save raw test result files as artifacts
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: Test Results
         path: '**/*.trx'
+
+    - name: Upload code coverage report   # Save coverage report for analysis
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Code Coverage
+        path: '**/coverage.cobertura.xml'
+
+    - name: Upload ExtentReports 
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ExtentReports
+        path: '**/Reports/*.html'
+
+    
